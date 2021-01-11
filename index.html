@@ -17,6 +17,14 @@
     app.ports.setItem.subscribe(function(data) {
       localStorage.setItem(data.key, data.value);
     });
+    app.ports.getItem.subscribe(function(key) {
+      var value = localStorage.getItem(key);
+      if(!!value && value.trim().length() > 0) {
+        app.ports.gotItem.send(value);
+      } else {
+        console.error('Invalid/non-existing key:', key);
+      }
+    });
   </script>
 </body>
 </html>

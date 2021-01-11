@@ -1,8 +1,9 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, h1, h2, input, p, text)
-import Html.Events exposing (onInput)
+import Html exposing (Html, button, div, h1, h2, input, label, p, text)
+import Html.Attributes exposing (disabled, for, id, readonly, value)
+import Html.Events exposing (onClick, onInput)
 
 
 
@@ -24,8 +25,10 @@ main =
 
 
 type alias Model =
-    { itemKeyToSet : String
-    , itemValueToSet : String
+    { key : String
+    , value : String
+    , keyToGet : String
+    , valueGot : String
     }
 
 
@@ -35,8 +38,10 @@ type alias Model =
 
 initialModel : Model
 initialModel =
-    { itemKeyToSet = "test1"
-    , itemValueToSet = ""
+    { key = "test1"
+    , value = ""
+    , keyToGet = ""
+    , valueGot = ""
     }
 
 
@@ -50,12 +55,12 @@ init _ =
 
 
 type Msg
-    = SetItemValue String
-
-
-
--- = GetItem String
--- | SetItemValue String
+    = SetValue String
+    | StoreItem
+    | SetKey String
+    | SetKeyToGet String
+    | GetItem String
+    | GotItem String
 
 
 type alias LocalStorageItem =
@@ -67,8 +72,23 @@ type alias LocalStorageItem =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetItemValue newValue ->
-            ( { model | itemValueToSet = newValue }, setItem { key = "test1", value = model.itemValueToSet } )
+        SetValue newValue ->
+            ( { model | value = newValue }, Cmd.none )
+
+        StoreItem ->
+            ( model, setItem { key = model.key, value = model.value } )
+
+        SetKey newKey ->
+            ( { model | key = newKey }, Cmd.none )
+
+        SetKeyToGet newKey ->
+            ( { model | keyToGet = newKey }, Cmd.none )
+
+        GetItem key ->
+            ( model, getItem key )
+
+        GotItem value ->
+            ( { model | valueGot = value }, Cmd.none )
 
 
 
@@ -80,10 +100,33 @@ view model =
     div []
         [ h1 [] [ text "localStorage example" ]
         , div []
-            [ h2 [] [ text "Set Item" ]
+            [ h2 [] [ text "Set" ]
             , div []
-                [ p [] [ text ("Key: " ++ model.itemKeyToSet) ]
-                , input [ onInput SetItemValue ] []
+                [ div []
+                    [ label [ for "key-input" ] [ text "Item key" ]
+                    , input [ id "key-input", onInput SetKey, value model.key ] []
+                    ]
+                , div []
+                    [ label [ for "value-input" ] [ text "Item value" ]
+                    , input [ id "value-input", onInput SetValue, value model.value ] []
+                    ]
+                , button [ onClick StoreItem ] [ text "Set" ]
+                ]
+            ]
+        , div []
+            [ h2 [] [ text "Get" ]
+            , div []
+                [ label [ for "key-to-get-input" ] [ text "Item key" ]
+                , input [ id "key-to-get-input", onInput SetKeyToGet ] []
+                , button
+                    [ onClick (GetItem model.keyToGet)
+                    , disabled (String.length (String.trim model.keyToGet) == 0)
+                    ]
+                    [ text "Get" ]
+                ]
+            , div []
+                [ label [ for "value-gotten-input" ] [ text " Value gotten" ]
+                , input [ id "value-gotten-input", readonly True, value model.valueGot ] []
                 ]
             ]
         ]
@@ -96,6 +139,12 @@ view model =
 port setItem : LocalStorageItem -> Cmd msg
 
 
+port getItem : String -> Cmd msg
+
+
+port gotItem : (String -> msg) -> Sub msg
+
+
 
 -- port requestItem : (String -> msg) -> Sub msg
 -- port arrivingItem : (String -> msg) -> Sub msg
@@ -104,4 +153,4 @@ port setItem : LocalStorageItem -> Cmd msg
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    gotItem GotItem
