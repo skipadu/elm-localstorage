@@ -19,10 +19,18 @@
     });
     app.ports.getItem.subscribe(function(key) {
       var value = localStorage.getItem(key);
-      if(!!value && value.trim().length() > 0) {
+      if(!!value && value.trim().length > 0) {
         app.ports.gotItem.send(value);
       } else {
         console.error('Invalid/non-existing key:', key);
+      }
+    });
+    app.ports.removeItem.subscribe(function(key) {
+      localStorage.removeItem(key);
+    });
+    app.ports.clear.subscribe(function() {
+      if(window.confirm('Are you sure?\nAll items will be removed.')) {
+        localStorage.clear();
       }
     });
   </script>

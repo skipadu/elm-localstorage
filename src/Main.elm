@@ -29,6 +29,7 @@ type alias Model =
     , value : String
     , keyToGet : String
     , valueGot : String
+    , keyToRemove : String
     }
 
 
@@ -42,6 +43,7 @@ initialModel =
     , value = ""
     , keyToGet = ""
     , valueGot = ""
+    , keyToRemove = ""
     }
 
 
@@ -61,6 +63,9 @@ type Msg
     | SetKeyToGet String
     | GetItem String
     | GotItem String
+    | SetKeyToRemove String
+    | RemoveItem
+    | Clear
 
 
 type alias LocalStorageItem =
@@ -89,6 +94,15 @@ update msg model =
 
         GotItem value ->
             ( { model | valueGot = value }, Cmd.none )
+
+        SetKeyToRemove key ->
+            ( { model | keyToRemove = key }, Cmd.none )
+
+        RemoveItem ->
+            ( model, removeItem model.keyToRemove )
+
+        Clear ->
+            ( model, clear () )
 
 
 
@@ -129,6 +143,27 @@ view model =
                 , input [ id "value-gotten-input", readonly True, value model.valueGot ] []
                 ]
             ]
+        , div []
+            [ h2 [] [ text "Remove" ]
+            , div []
+                [ label [ for "key-to-remove-input" ] [ text "Item key" ]
+                , input [ id "key-to-remove-input", onInput SetKeyToRemove ] []
+                , button
+                    [ onClick RemoveItem
+                    , disabled (String.length (String.trim model.keyToRemove) == 0)
+                    ]
+                    [ text "Remove" ]
+                ]
+            ]
+        , div []
+            [ h2 [] [ text "Clear" ]
+            , div []
+                [ button
+                    [ onClick Clear
+                    ]
+                    [ text "Clear" ]
+                ]
+            ]
         ]
 
 
@@ -143,6 +178,12 @@ port getItem : String -> Cmd msg
 
 
 port gotItem : (String -> msg) -> Sub msg
+
+
+port removeItem : String -> Cmd msg
+
+
+port clear : () -> Cmd msg
 
 
 
